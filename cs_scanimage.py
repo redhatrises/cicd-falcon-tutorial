@@ -427,6 +427,14 @@ def parse_args():
         help="Prints the report as json to stdout",
     )
     parser.add_argument(
+        "--skip-push",
+        action="store_true",
+        default=False,
+        dest="skip_push",
+        required=False,
+        help="Skip pushing the image to the registry",
+    )
+    parser.add_argument(
         "--user-agent",
         default="container-image-scan",
         type=str,
@@ -446,6 +454,7 @@ def parse_args():
         args.report,
         args.retry_count,
         args.plugin,
+        args.skip_push,
         args.useragent,
     )
 
@@ -461,6 +470,7 @@ def main():
             json_report,
             retry_count,
             plugin,
+            skip_push,
             useragent,
         ) = parse_args()
         client = docker.from_env()
@@ -472,9 +482,11 @@ def main():
         scan_image = ScanImage(
             client_id, client_secret, repo, tag, client, cloud, useragent
         )
-        scan_image.container_tag()
-        scan_image.container_login()
-        scan_image.container_push()
+
+        if not skip_push:
+            scan_image.container_tag()
+            scan_image.container_login()
+            scan_image.container_push()
 
         scan_report = scan_image.get_scanreport(retry_count)
 
